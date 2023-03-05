@@ -29,14 +29,13 @@ def test_get_all_pets_with_valid_key(filter=''):
     assert len(result['pets']) > 0
 
 
-def test_add_new_pet_with_valid_data(name='Барбоскин', animal_type='двортерьер',
-                                     age='4', pet_photo='images/muh.jpg'):
+def test_add_new_pet_with_valid_data(name='Барбоскин', animal_type='двортерьер', age='4', pet_photo='images/muh.jpg'):
     """Проверяем что можно добавить питомца с корректными данными"""
 
     # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
     pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
 
-    # Запрашиваем ключ api и сохраняем в переменую auth_key
+    # Запрашиваем ключ api и сохраняем в переменную auth_key
     _, auth_key = pf.get_api_key(valid_email, valid_password)
 
     # Добавляем питомца
@@ -78,7 +77,7 @@ def test_successful_update_self_pet_info(name='Мурзик', animal_type='Ко�
     _, auth_key = pf.get_api_key(valid_email, valid_password)
     _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
 
-    # Еслди список не пустой, то пробуем обновить его имя, тип и возраст
+    # Если список не пустой, то пробуем обновить его имя, тип и возраст
     if len(my_pets['pets']) > 0:
         status, result = pf.update_pet_info(auth_key, my_pets['pets'][0]['id'], name, animal_type, age)
 
@@ -86,5 +85,37 @@ def test_successful_update_self_pet_info(name='Мурзик', animal_type='Ко�
         assert status == 200
         assert result['name'] == name
     else:
-        # если спиок питомцев пустой, то выкидываем исключение с текстом об отсутствии своих питомцев
-        raise Exception("There is no my pets")
+        # если список питомцев пустой, то выкидываем исключение с текстом об отсутствии своих питомцев
+        raise Exception("Нет питомцев принадлежащих тебе")
+
+
+def test_add_new_pet_simle_valid_date(name="Leo", animal_type="cat", age="4"):
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+    status, result = pf.add_new_pet_simple(auth_key, name, animal_type, age)
+    assert status == 200
+    assert result['name'] == name
+
+
+def test_add_photo_simle_pet_valid_date(pet_photo="images/images.jpg"):
+    """ Проверяем возможность добавить фото к simple карточке питомца с корректными данными"""
+
+    # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
+    pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
+    # Получаем ключ auth_key и запрашиваем список своих питомцев
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+    _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
+    # Проверяем - если список своих питомцев пустой, то добавляем нового и опять запрашиваем список своих питомцев
+    if len(my_pets['pets']) == 0:
+        pf.add_new_pet_simple(auth_key, "Суперкот", "кот", "3")
+        _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
+
+    # Берём id первого питомца из списка и отправляем запрос на добавление фото
+    pet_id = my_pets['pets'][0]['id']
+    # Проверяем есть ли у данного питомца pet_photo
+    if my_pets['pets'][0]['pet_photo'] == "" :
+        status, result = pf.add_pet_photo(auth_key, pet_id, pet_photo)
+        assert status == 200
+        assert result['id'] == pet_id
+    else:
+        # если у  питомца уже есть фото , то выкидываем исключение с текстом об отсутствии своих питомцев
+        raise Exception("У питомца уже есть фото")
