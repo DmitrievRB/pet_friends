@@ -4,8 +4,17 @@ import os
 import pytest
 
 pf = PetFriends()
+def my_decorator(f):
+    def wrapped(*args, **kwargs):
+        print('до функции')
+        response = f(*args, **kwargs)
+        print('после функции')
+        return response
 
+    print('декорируем функцию', f)
+    return wrapped
 
+@my_decorator
 @pytest.mark.get
 def test_get_api_key_for_valid_user(email=valid_email, password=valid_password):
     """ Проверяем что запрос api ключа возвращает статус 200 и в результате содержится слово key"""
@@ -16,7 +25,7 @@ def test_get_api_key_for_valid_user(email=valid_email, password=valid_password):
     # Сверяем полученные данные с нашими ожиданиями
     assert status == 200
     assert 'key' in result
-
+@my_decorator
 @pytest.mark.get
 def test_get_all_pets_with_valid_key(time_out, get_api_key, filter=''):
     """ Проверяем что запрос всех питомцев возвращает не пустой список.
