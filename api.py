@@ -21,7 +21,7 @@ class PetFriends:
         }
         res = requests.get(self.base_url + 'api/key', timeout=2, headers=headers)
         status = res.status_code
-        result = ""
+        # result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -34,12 +34,12 @@ class PetFriends:
         либо пустое значение - получить список всех питомцев, либо 'my_pets' - получить список
         собственных питомцев"""
 
-        headers = {'auth_key': auth_key['key']}
+        headers = {'auth_key': auth_key}
         filter = {'filter': filter}
 
         res = requests.get(self.base_url + 'api/pets', timeout=2, headers=headers, params=filter)
         status = res.status_code
-        result = ""
+        ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -58,11 +58,10 @@ class PetFriends:
                 'age': age,
                 'pet_photo': (pet_photo, open(pet_photo, 'rb'), 'image/jpeg')
             })
-        headers = {'auth_key': auth_key['key'], 'Content-Type': data.content_type}
+        headers = {'auth_key': auth_key, 'Content-Type': data.content_type}
 
         res = requests.post(self.base_url + 'api/pets', timeout=2, headers=headers, data=data)
         status = res.status_code
-        result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -75,11 +74,10 @@ class PetFriends:
         статус запроса и результат в формате JSON с уведомлением об успешном удалении. На сегодняшний
         день тут есть баг - в result приходит пустая строка, но status при этом = 200 """
 
-        headers = {'auth_key': auth_key['key']}
+        headers = {'auth_key': auth_key}
 
         res = requests.delete(self.base_url + 'api/pets/' + pet_id, timeout=2, headers=headers)
         status = res.status_code
-        result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -92,7 +90,7 @@ class PetFriends:
         """Метод отправляет запрос на сервер об обновлении данных питомца по указанному ID и
         возвращает статус запроса и result в формате JSON с обновлёнными данными питомца"""
 
-        headers = {'auth_key': auth_key['key']}
+        headers = {'auth_key': auth_key}
         data = {
             'name': name,
             'age': age,
@@ -101,7 +99,6 @@ class PetFriends:
 
         res = requests.put(self.base_url + 'api/pets/' + pet_id, timeout=2, headers=headers, data=data)
         status = res.status_code
-        result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -111,7 +108,7 @@ class PetFriends:
     def add_new_pet_simple(self, auth_key: json, name: str, animal_type: str, age: str) -> json:
         """ Метод отправляет get запрос с передавая заголовки : auth_key, name, animal_type, age на создание
             нового питомца в облегченной версии без фото"""
-        headers = {'auth_key': auth_key['key']}
+        headers = {'auth_key': auth_key}
         data = {
             'name': name,
             'age': age,
@@ -119,7 +116,6 @@ class PetFriends:
         }
         res = requests.post(self.base_url + '/api/create_pet_simple', timeout=2, headers=headers, data=data)
         status = res.status_code
-        result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
@@ -135,10 +131,9 @@ class PetFriends:
                 "pet_photo": (pet_photo, open(pet_photo, "rb"), "images/jpeg")
             }
         )
-        headers = {"auth_key": auth_key["key"], 'Content-Type': data.content_type}
-        res = requests.post(self.base_url + "/api/pets/set_photo/" + pet_id,timeout=2, headers=headers, data=data)
+        headers = {"auth_key": auth_key, 'Content-Type': data.content_type}
+        res = requests.post(self.base_url + "/api/pets/set_photo/" + pet_id, timeout=2, headers=headers, data=data)
         status = res.status_code
-        result = ""
         try:
             result = res.json()
         except json.decoder.JSONDecodeError:
