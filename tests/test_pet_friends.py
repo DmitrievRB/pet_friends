@@ -4,17 +4,8 @@ import os
 import pytest
 
 pf = PetFriends()
-def my_decorator(f):
-    def wrapped(*args, **kwargs):
-        print('до функции')
-        response = f(*args, **kwargs)
-        print('после функции')
-        return response
 
-    print('декорируем функцию', f)
-    return wrapped
 
-@my_decorator
 @pytest.mark.get
 def test_get_api_key_for_valid_user(email=valid_email, password=valid_password):
     """ Проверяем что запрос api ключа возвращает статус 200 и в результате содержится слово key"""
@@ -25,7 +16,8 @@ def test_get_api_key_for_valid_user(email=valid_email, password=valid_password):
     # Сверяем полученные данные с нашими ожиданиями
     assert status == 200
     assert 'key' in result
-@my_decorator
+
+
 @pytest.mark.get
 def test_get_all_pets_with_valid_key(time_out, get_api_key, filter=''):
     """ Проверяем что запрос всех питомцев возвращает не пустой список.
@@ -38,6 +30,7 @@ def test_get_all_pets_with_valid_key(time_out, get_api_key, filter=''):
 
     assert status == 200
     assert len(result['pets']) > 0
+
 
 @pytest.mark.post
 def test_add_new_pet_with_valid_data(time_out, get_api_key, name='Барбоскин', animal_type='двортерьер', age='4',
@@ -56,6 +49,7 @@ def test_add_new_pet_with_valid_data(time_out, get_api_key, name='Барбоск
     # Сверяем полученный ответ с ожидаемым результатом
     assert status == 200
     assert result['name'] == name
+
 
 @pytest.mark.delete
 def test_successful_delete_self_pet(time_out, get_api_key):
@@ -81,6 +75,7 @@ def test_successful_delete_self_pet(time_out, get_api_key):
     assert status == 200
     assert pet_id not in my_pets.values()
 
+
 @pytest.mark.put
 def test_successful_update_self_pet_info(time_out, get_api_key, name='Мурзик', animal_type='Котэ', age=5):
     """Проверяем возможность обновления информации о питомце"""
@@ -104,6 +99,7 @@ def test_successful_update_self_pet_info(time_out, get_api_key, name='Мурзи
         assert status == 200
         assert result['name'] == name
 
+
 @pytest.mark.post
 def test_add_new_pet_simle_valid_date(time_out, get_api_key, name="Leo", animal_type="cat", age="4"):
     """ Проверяем возможность создания карточки питомца без фото """
@@ -113,6 +109,7 @@ def test_add_new_pet_simle_valid_date(time_out, get_api_key, name="Leo", animal_
     # Проверяем статус запроса и строку json ответа
     assert status == 200
     assert result['name'] == name
+
 
 @pytest.mark.post
 def test_add_photo_simle_pet_valid_date(time_out, get_api_key, pet_photo="images/images.jpg"):
@@ -136,6 +133,7 @@ def test_add_photo_simle_pet_valid_date(time_out, get_api_key, pet_photo="images
 
     # Проверяем возможность получения ключа при не валидной почте
 
+
 @pytest.mark.get
 def test_get_api_key_for_not_valid_email(time_out, email=not_valid_email, password=valid_password):
     """ Проверяем что запрос api ключа возвращает статус 403 при использовании не валидной почты"""
@@ -145,6 +143,7 @@ def test_get_api_key_for_not_valid_email(time_out, email=not_valid_email, passwo
 
     # Проверяем получение статуса 403
     assert status == 403
+
 
 @pytest.mark.get
 def test_get_api_key_for_not_valid_password(time_out, email=valid_email, password=not_valid_password):
@@ -180,6 +179,7 @@ def test_add_new_pet_simle_not_valid_auth_key(time_out, name="Leo", animal_type=
     # Проверяем статус запроса и строку json ответа
     assert status == 403
 
+
 @pytest.mark.get
 def test_get_all_pets_with_not_valid_filter(time_out, get_api_key, filter='my_pet'):
     """ Проверяем что запрос всех питомцев возвращает статус 500 в ответ
@@ -189,6 +189,7 @@ def test_get_all_pets_with_not_valid_filter(time_out, get_api_key, filter='my_pe
     status, result = pf.get_list_of_pets(auth_key, filter)
 
     assert status == 500
+
 
 @pytest.mark.get
 def test_get_all_pets_with_not_valid_key(time_out, filter=''):
