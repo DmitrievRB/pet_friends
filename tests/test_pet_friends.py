@@ -1,9 +1,38 @@
 from api import PetFriends
+
 from settings import valid_email, valid_password, not_valid_email, not_valid_password
 import os
 import pytest
 
 pf = PetFriends()
+
+
+# Функция генерации строка размера n
+def generate_string(n):
+    return "x" * n
+
+
+# данные для проверки кириллической кодировки
+def russian_chars():
+    return "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+
+
+# данные для проверки китайской кодировки
+def chinese_chars():
+    return "北京位於華北平原的西北边缘"
+
+
+# данные для проверки спецсимволов
+def special_chars():
+    return "|\\/!@#$%^&*()-_=+`~?№;:[]{}"
+
+
+# # данные для проверки возраста
+# def is_age_valid(age):
+#     # Проверяем, что возраст - это число от 1 до 49 и целое
+#     return age.isdigit() \
+#         and 0 < int(age) < 50 \
+#         and float(age) == int(age)
 
 
 @pytest.mark.get
@@ -18,13 +47,13 @@ def test_get_api_key_for_valid_user(email=valid_email, password=valid_password):
     assert 'key' in result
 
 
+@pytest.mark.parametrize("filter", ["", "my_pets"], ids=["empty string", "only my pets"])
 @pytest.mark.get
-def test_get_all_pets_with_valid_key(time_out, get_api_key, filter=''):
+def test_get_all_pets_with_valid_key_positive(get_api_key, filter):
     """ Проверяем что запрос всех питомцев возвращает не пустой список.
     Для этого сначала получаем api ключ и сохраняем в переменную auth_key. Далее используя этого ключ
     запрашиваем список всех питомцев и проверяем что список не пустой.
     Доступное значение параметра filter - 'my_pets' либо '' """
-
     auth_key = get_api_key["key"]
     status, result = pf.get_list_of_pets(auth_key, filter)
 
@@ -32,8 +61,25 @@ def test_get_all_pets_with_valid_key(time_out, get_api_key, filter=''):
     assert len(result['pets']) > 0
 
 
+@pytest.mark.parametrize("filter", [generate_string(255), generate_string(1001),
+                                    russian_chars(), russian_chars().upper(), chinese_chars(), special_chars(), 123],
+                         ids=["255 symbols", "more then 1000 symbols",
+                              'russian', 'RUSSIAN', 'chinese', 'specials', 'digit'])
+@pytest.mark.get
+def test_get_all_pets_with_valid_key_negative(get_api_key, filter):
+    """ Проверяем что запрос всех питомцев возвращает не пустой список.
+    Для этого сначала получаем api ключ и сохраняем в переменную auth_key. Далее используя этого ключ
+    запрашиваем список всех питомцев и проверяем что список не пустой.
+    Доступное значение параметра filter - 'my_pets' либо '' """
+    auth_key = get_api_key["key"]
+    status, result = pf.get_list_of_pets(auth_key, filter)
+
+    assert status == 400
+    assert len(result['pets']) > 0
+
+
 @pytest.mark.post
-def test_add_new_pet_with_valid_data(time_out, get_api_key, name='Барбоскин', animal_type='двортерьер', age='4',
+def test_add_new_pet_with_valid_data(get_api_key, name='Барбоскин', animal_type='двортерьер', age='4',
                                      pet_photo='images/muh.jpg'):
     """Проверяем что можно добавить питомца с корректными данными"""
 
@@ -52,7 +98,7 @@ def test_add_new_pet_with_valid_data(time_out, get_api_key, name='Барбоск
 
 
 @pytest.mark.delete
-def test_successful_delete_self_pet(time_out, get_api_key):
+def test_successful_delete_self_pet(get_api_key):
     """Проверяем возможность удаления питомца"""
 
     # Получаем ключ auth_key и запрашиваем список своих питомцев
@@ -77,7 +123,7 @@ def test_successful_delete_self_pet(time_out, get_api_key):
 
 
 @pytest.mark.put
-def test_successful_update_self_pet_info(time_out, get_api_key, name='Мурзик', animal_type='Котэ', age=5):
+def test_successful_update_self_pet_info(get_api_key, name='Мурзик', animal_type='Котэ', age=5):
     """Проверяем возможность обновления информации о питомце"""
 
     # Получаем ключ auth_key и список своих питомцев
@@ -100,19 +146,53 @@ def test_successful_update_self_pet_info(time_out, get_api_key, name='Мурзи
         assert result['name'] == name
 
 
+@pytest.mark.parametrize("name", [
+    generate_string(255), generate_string(1001)
+    , russian_chars(), russian_chars().upper(), chinese_chars()
+    , special_chars(), '123'],
+                         ids=['255 symbols', 'more than 1000 symbols'
+                             , 'russian', 'RUSSIAN', 'chinese', 'specials', 'digit'])
+@pytest.mark.parametrize("animal_type", [
+    generate_string(255), generate_string(1001)
+    , russian_chars(), russian_chars().upper(), chinese_chars()
+    , special_chars(), '123'],
+                         ids=['255 symbols', 'more than 1000 symbols'
+                             , 'russian', 'RUSSIAN', 'chinese', 'specials', 'digit'])
+@pytest.mark.parametrize("age", ['1'], ids=['min'])
 @pytest.mark.post
-def test_add_new_pet_simle_valid_date(time_out, get_api_key, name="Leo", animal_type="cat", age="4"):
+def test_add_new_pet_simle_valid_date(get_api_key, name, animal_type, age):
     """ Проверяем возможность создания карточки питомца без фото """
     # Получаем ключ auth_key и отправляем запрос на создание питомца без фото
     auth_key = get_api_key["key"]
     status, result = pf.add_new_pet_simple(auth_key, name, animal_type, age)
     # Проверяем статус запроса и строку json ответа
+
     assert status == 200
     assert result['name'] == name
+    assert result['age'] == age
+    assert result['animal_type'] == animal_type
+
+
+@pytest.mark.parametrize("name", [""], ids=['empty'])
+@pytest.mark.parametrize("animal_type", [""], ids=['empty'])
+@pytest.mark.parametrize("age"
+    , ['', '-1', '0', '1', '100', '1.5', '2147483647', '2147483648', special_chars(), russian_chars(),
+       russian_chars().upper(), chinese_chars()]
+    , ids=['empty', 'negative', 'zero', 'min', 'greater than max', 'float', 'int_max', 'int_max + 1', 'specials',
+           'russian', 'RUSSIAN', 'chinese'])
+@pytest.mark.post
+def test_add_new_pet_simle_valid_date_negative(get_api_key, name, animal_type, age):
+    """ Проверяем возможность создания карточки питомца без фото """
+    # Получаем ключ auth_key и отправляем запрос на создание питомца без фото
+    auth_key = get_api_key["key"]
+    status, result = pf.add_new_pet_simple(auth_key, name, animal_type, age)
+    # Проверяем статус запроса и строку json ответа
+
+    assert status == 400
 
 
 @pytest.mark.post
-def test_add_photo_simle_pet_valid_date(time_out, get_api_key, pet_photo="images/images.jpg"):
+def test_add_photo_simle_pet_valid_date(get_api_key, pet_photo="images/images.jpg"):
     """ Проверяем возможность добавить фото к карточке без фото питомца с корректными данными"""
 
     # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
@@ -135,7 +215,7 @@ def test_add_photo_simle_pet_valid_date(time_out, get_api_key, pet_photo="images
 
 
 @pytest.mark.get
-def test_get_api_key_for_not_valid_email(time_out, email=not_valid_email, password=valid_password):
+def test_get_api_key_for_not_valid_email(email=not_valid_email, password=valid_password):
     """ Проверяем что запрос api ключа возвращает статус 403 при использовании не валидной почты"""
 
     # Отправляем запрос и сохраняем полученный ответ с кодом статуса в status, а текст ответа в result
@@ -146,7 +226,7 @@ def test_get_api_key_for_not_valid_email(time_out, email=not_valid_email, passwo
 
 
 @pytest.mark.get
-def test_get_api_key_for_not_valid_password(time_out, email=valid_email, password=not_valid_password):
+def test_get_api_key_for_not_valid_password(email=valid_email, password=not_valid_password):
     """ Проверяем что запрос api ключа возвращает статус 403 при использовании не валидного пароля"""
 
     # Отправляем запрос и сохраняем полученный ответ с кодом статуса в status, а текст ответа в result
@@ -158,7 +238,7 @@ def test_get_api_key_for_not_valid_password(time_out, email=valid_email, passwor
 
 @pytest.mark.skip(reason="Баг с создание нулевых полей")
 @pytest.mark.post
-def test_add_new_pet_simle_null_fields(time_out, get_api_key, name="", animal_type="", age=""):
+def test_add_new_pet_simle_null_fields(get_api_key, name="", animal_type="", age=""):
     """ Проверяем возможность создания карточки питомца без фото
     с пустыми полями по документации запрос должен вернуть статус 400"""
     # Получаем ключ auth_key и отправляем запрос на создание питомца без фото
@@ -170,7 +250,7 @@ def test_add_new_pet_simle_null_fields(time_out, get_api_key, name="", animal_ty
 
 @pytest.mark.xfail
 @pytest.mark.post
-def test_add_new_pet_simle_not_valid_auth_key(time_out, name="Leo", animal_type="cat", age="4"):
+def test_add_new_pet_simle_not_valid_auth_key(name="Leo", animal_type="cat", age="4"):
     """ Проверяем возможность создания карточки питомца без фото с не валидным
     ключом авторизации"""
     # Получаем ключ auth_key и отправляем запрос на создание питомца без фото
@@ -181,18 +261,7 @@ def test_add_new_pet_simle_not_valid_auth_key(time_out, name="Leo", animal_type=
 
 
 @pytest.mark.get
-def test_get_all_pets_with_not_valid_filter(time_out, get_api_key, filter='my_pet'):
-    """ Проверяем что запрос всех питомцев возвращает статус 500 в ответ
-    на запрос с не корректным значением фильтра"""
-
-    auth_key = get_api_key["key"]
-    status, result = pf.get_list_of_pets(auth_key, filter)
-
-    assert status == 500
-
-
-@pytest.mark.get
-def test_get_all_pets_with_not_valid_key(time_out, filter=''):
+def test_get_all_pets_with_not_valid_key(filter=''):
     """ Проверяем что запрос всех питомцев возвращает статус 403
     при не валидно значении auth_key"""
 
@@ -204,7 +273,7 @@ def test_get_all_pets_with_not_valid_key(time_out, filter=''):
 
 @pytest.mark.skip(reason="Баг с создание нулевых полей")
 @pytest.mark.post
-def test_add_new_pet_with_null_fields_with_photo(time_out, get_api_key, name='', animal_type='', age='',
+def test_add_new_pet_with_null_fields_with_photo(get_api_key, name='', animal_type='', age='',
                                                  pet_photo='images/muh.jpg'):
     """Проверяем что запрос с пустыми полями, но с фото возвращает статус 400"""
 
@@ -223,7 +292,7 @@ def test_add_new_pet_with_null_fields_with_photo(time_out, get_api_key, name='',
 
 @pytest.mark.skip(reason="Баг на битом изображении")
 @pytest.mark.post
-def test_add_new_pet_with_not_valid_photo(time_out, get_api_key, name='Барбоскин', animal_type='двортерьер', age='4',
+def test_add_new_pet_with_not_valid_photo(get_api_key, name='Барбоскин', animal_type='двортерьер', age='4',
                                           pet_photo='images/no_valid_photo.jpg'):
     """Проверяем что запрос возвращает статус 400 если вместо фото передать текстовый файл
     переименованный в jpg, остальные поля валидны"""

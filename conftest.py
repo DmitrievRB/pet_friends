@@ -1,8 +1,10 @@
-from settings import *
-import requests
-import pytest
-import json
 import datetime
+import json
+
+import pytest
+import requests
+
+from settings import *
 
 
 @pytest.fixture(autouse=True)
@@ -30,3 +32,26 @@ def time_out():
     yield
     end_time = datetime.datetime.now()
     print(f"\nТест шел: {end_time - start_time}")
+
+# @pytest.fixture(autouse=True)
+# def add_log(request):
+#     print("Начинаем тест")
+#     print(f"Running test: {request.function.__name__}")
+#
+#     yield
+#     with open("log.txt", "a") as f:
+#         log = request.function.__name__
+#
+#         f.write(log)
+#     # print(len(request.session.items))
+#     print(f"Running test: {request.function.__name__}")
+#     for i in request.session.items:
+#         print("reportinfo:", i.reportinfo())
+#
+#         for k in i.keywords:
+#             print("keywords:", k)
+#
+#         print("own_markers:", i.own_markers)
+#         print("fspath:", i.fspath)
+#         print("name:", i.name)
+#         print("extra_keyword_matches:", i.extra_keyword_matches)
